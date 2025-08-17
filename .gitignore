@@ -1,0 +1,51 @@
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# JetBrains IDEs (IntelliJ IDEA, WebStorm, GoLand, etc.)
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
+logs/
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build outputs
+build/
+dist/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*~
