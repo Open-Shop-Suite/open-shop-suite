@@ -323,7 +323,7 @@ COMMENT ON COLUMN product_images.image_type IS 'Type of image: main, gallery, th
 CREATE TABLE product_reviews (
     id RAW(16) DEFAULT SYS_GUID() PRIMARY KEY,
     product_id RAW(16) NOT NULL,
-    customer_id RAW(16) NOT NULL,
+    customer_id NUMBER NOT NULL,
     order_id RAW(16),  -- Optional: link to purchase
 
     -- Review content

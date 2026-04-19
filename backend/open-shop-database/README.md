@@ -79,32 +79,32 @@ open-shop-database/
    ```
 
 2. **Configure Database Connection**
-   
-   Edit `flyway.conf` and uncomment your database section:
+
+   Edit `flyway.conf` and uncomment your database section. Use a **system admin user** (with full database privileges) for migrations:
 
    ```properties
    # For MySQL
    flyway.url=jdbc:mysql://localhost:3306/openshop?useSSL=true&serverTimezone=UTC&allowPublicKeyRetrieval=true
-   flyway.user=openshop
-   flyway.password=your_password
+   flyway.user=root
+   flyway.password=your_admin_password
    flyway.locations=filesystem:db/migration/mysql
    flyway.schemas=openshop
    ```
 
    ```properties
-   # For PostgreSQL  
+   # For PostgreSQL
    flyway.url=jdbc:postgresql://localhost:5432/openshop?sslmode=prefer
-   flyway.user=openshop
-   flyway.password=your_password
+   flyway.user=postgres
+   flyway.password=your_admin_password
    flyway.locations=filesystem:db/migration/postgresql
    flyway.schemas=openshop
    ```
 
    ```properties
    # For Oracle
-   flyway.url=jdbc:oracle:thin:@localhost:1521:XE
-   flyway.user=openshop
-   flyway.password=your_password
+   flyway.url=jdbc:oracle:thin:@//localhost:1521/freepdb1
+   flyway.user=system
+   flyway.password=your_admin_password
    flyway.locations=filesystem:db/migration/oracle
    flyway.schemas=openshop
    ```
@@ -123,38 +123,66 @@ open-shop-database/
 
 ### Database-Specific Setup
 
+**Note:** Flyway uses a system admin user for migrations. Create a web-server user for runtime operations:
+
+- **Flyway User**: System admin user (e.g., `root`, `postgres`, `system`) with full database privileges to create schemas, tables, views, etc.
+- **Web-Server User** (e.g., `app_user`): Limited privileges for application runtime operations (SELECT, INSERT, UPDATE, DELETE) on the openshop schema
+
 #### MySQL Setup
 ```sql
-CREATE DATABASE openshop CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'openshop'@'%' IDENTIFIED BY 'secure_password';
-GRANT ALL PRIVILEGES ON openshop.* TO 'openshop'@'%';
+-- Create web-server user with broad privileges
+CREATE USER 'app_user'@'%' IDENTIFIED BY 'secure_app_password';
+
+-- Grant privileges for DML and Query on ALL databases/schemas
+GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO 'app_user'@'%';
+GRANT EXECUTE ON *.* TO 'app_user'@'%';
+
 FLUSH PRIVILEGES;
 ```
 
 #### PostgreSQL Setup
 ```sql
-CREATE DATABASE openshop WITH ENCODING 'UTF8' LC_COLLATE 'en_US.UTF-8' LC_CTYPE 'en_US.UTF-8';
-CREATE USER openshop WITH ENCRYPTED PASSWORD 'secure_password';
-GRANT ALL PRIVILEGES ON DATABASE openshop TO openshop;
+-- Create web-server user with limited privileges (Flyway handles database/schema creation)
+CREATE USER app_user WITH ENCRYPTED PASSWORD 'secure_app_password';
+GRANT CONNECT ON DATABASE openshop TO app_user;
+GRANT USAGE ON SCHEMA openshop TO app_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA openshop TO app_user;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA openshop TO app_user;
 
--- Connect to openshop database
-\c openshop
-CREATE SCHEMA openshop AUTHORIZATION openshop;
-GRANT ALL ON SCHEMA openshop TO openshop;
+-- Grant permissions on future tables/sequences
+ALTER DEFAULT PRIVILEGES IN SCHEMA openshop GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA openshop GRANT USAGE, SELECT ON SEQUENCES TO app_user;
 ```
 
 #### Oracle Setup
 ```sql
--- Connect as system user
-CREATE TABLESPACE openshop_data
-    DATAFILE 'openshop_data01.dbf'
-    SIZE 100M AUTOEXTEND ON MAXSIZE UNLIMITED;
+-- 1. Create the web-server user with a secure password
+CREATE USER app_user IDENTIFIED BY "secure_app_password"
+DEFAULT TABLESPACE users;
 
-CREATE USER openshop IDENTIFIED BY "secure_password"
-    DEFAULT TABLESPACE openshop_data
-    QUOTA UNLIMITED ON openshop_data;
+-- 2. Grant the CONNECT permission (minimum to log in)
+GRANT CREATE SESSION TO app_user;
 
-GRANT CONNECT, RESOURCE, CREATE VIEW, CREATE SEQUENCE TO openshop;
+-- 3. Grant privileges for DML and Query on ALL schemas
+-- Allows app_user to SELECT from tables/views in any schema (e.g., openshop.products)
+GRANT SELECT ANY TABLE TO app_user;
+
+-- Allows app_user to INSERT into tables in any schema
+GRANT INSERT ANY TABLE TO app_user;
+
+-- Allows app_user to UPDATE rows in tables in any schema
+GRANT UPDATE ANY TABLE TO app_user;
+
+-- Allows app_user to DELETE rows from tables in any schema
+GRANT DELETE ANY TABLE TO app_user;
+
+-- Allows app_user to EXECUTE procedures/functions/packages in any schema
+GRANT EXECUTE ANY PROCEDURE TO app_user;
+
+-- Grant privilege for using sequences 
+GRANT SELECT ANY SEQUENCE TO app_user;
+    
+COMMIT;
 ```
 
 ## Key Features
@@ -273,9 +301,9 @@ FROM user_segments;
 ## Security Considerations
 
 - **Never commit passwords** to version control
-- **Use environment variables** for sensitive data: `FLYWAY_PASSWORD=your_password`
+- **Use environment variables** for sensitive data: `FLYWAY_PASSWORD=your_admin_password` (for system admin Flyway user) and configure your application to use `your_app_password` (for web-server user)
 - **Enable SSL/TLS** for all database connections
-- **Restrict database permissions** to minimum required
+- **Restrict database permissions** to minimum required - system admin user has full privileges for migrations, web-server user has only SELECT/INSERT/UPDATE/DELETE on the openshop schema
 - **Regular security audits** of database access and permissions
 
 ## Troubleshooting

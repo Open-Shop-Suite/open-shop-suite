@@ -1,7 +1,6 @@
 package com.openshop.database;
 
 import org.flywaydb.core.Flyway;
-import org.flywaydb.core.api.output.MigrateResult;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -10,7 +9,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.sql.*;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -23,11 +21,11 @@ public class OracleSchemaTest extends AbstractDatabaseSchemaTest {
     private static final String SCHEMA_NAME = "openshop";
 
     @Container
-    static final GenericContainer<?> oracle = new GenericContainer<>("container-registry.oracle.com/database/free:23.9.0.0-arm64")
-            .withExposedPorts(1521, 5500)
+    static final GenericContainer<?> oracle = new GenericContainer<>("container-registry.oracle.com/database/free:latest")
+            .withExposedPorts(1521)
             .withEnv("ORACLE_PWD", "Test@123")
-            .waitingFor(Wait.forLogMessage(".*DATABASE IS READY TO USE.*", 1))
-            .withStartupTimeout(Duration.ofMinutes(10))
+            .waitingFor(Wait.forHealthcheck())
+            .withStartupTimeout(Duration.ofMinutes(5))
             .withReuse(false);
 
     @Override

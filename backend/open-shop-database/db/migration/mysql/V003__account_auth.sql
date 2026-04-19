@@ -16,6 +16,9 @@ CREATE TABLE user_sessions (
     last_accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ip_address VARCHAR(45),
     user_agent TEXT,
+    device_type ENUM('web', 'mobile_ios', 'mobile_android', 'desktop', 'api') NOT NULL DEFAULT 'api',
+    device_name VARCHAR(255),
+    location VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
 
     INDEX idx_session_customer (customer_id),
@@ -57,3 +60,22 @@ CREATE TABLE email_verification_tokens (
     INDEX idx_verify_email (email),
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+-- =============================================
+-- OAUTH STATES TABLE
+-- =============================================
+CREATE TABLE oauth_states (
+    state      VARCHAR(128) NOT NULL,
+    provider   ENUM('google', 'facebook', 'linkedin') NOT NULL,
+    channel    ENUM('web', 'mobile_ios', 'mobile_android', 'desktop') NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used_at    TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (state),
+    INDEX idx_oauth_state_expires (expires_at),
+    INDEX idx_oauth_state_provider (provider)
+) ENGINE=InnoDB;
+
+-- COMMENTS for oauth_states
+-- Short-lived CSRF state tokens for OAuth authorization flow

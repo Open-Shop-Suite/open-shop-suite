@@ -31,6 +31,11 @@ COMMENT ON COLUMN audit_log.new_values IS 'JSON field storing new values for INS
 
 
 -- =============================================
+-- ORDER NUMBER SEQUENCE
+-- =============================================
+CREATE SEQUENCE order_number_seq START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+
+-- =============================================
 -- ORDER NUMBER GENERATION FUNCTION
 -- =============================================
 CREATE OR REPLACE FUNCTION generate_order_number

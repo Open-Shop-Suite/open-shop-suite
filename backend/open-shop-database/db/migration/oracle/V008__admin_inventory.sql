@@ -199,7 +199,7 @@ CREATE TABLE inventory_log (
     reference_id VARCHAR2(255),  -- order_id, adjustment_id, etc.
 
     -- User attribution
-    admin_user_id RAW(16), -- Who made the change
+    admin_user_id NUMBER, -- Who made the change
     admin_username VARCHAR2(100), -- For display purposes
 
     -- Audit
@@ -258,9 +258,9 @@ CREATE TABLE inventory_alerts (
 
     -- Alert status
     status VARCHAR2(20) DEFAULT 'active' CHECK (status IN ('active', 'acknowledged', 'resolved', 'dismissed')),
-    acknowledged_by RAW(16),
+    acknowledged_by NUMBER,
     acknowledged_at TIMESTAMP WITH TIME ZONE,
-    resolved_by RAW(16),
+    resolved_by NUMBER,
     resolved_at TIMESTAMP WITH TIME ZONE,
 
     -- Threshold values (for context)

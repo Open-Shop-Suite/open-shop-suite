@@ -22,6 +22,7 @@ public final class DatabaseTestConstants {
             "CUSTOMER_PREFERENCES",
             "CUSTOMER_ADDRESSES",
             "USER_SESSIONS",
+            "OAUTH_STATES",
 
             // Product Catalog
             "CATEGORIES",
@@ -101,6 +102,10 @@ public final class DatabaseTestConstants {
 
         put("EMAIL_VERIFICATION_TOKENS", Arrays.asList(
                 "IDX_VERIFY_CUSTOMER", "IDX_VERIFY_EMAIL"
+        ));
+
+        put("OAUTH_STATES", Arrays.asList(
+                "IDX_OAUTH_STATE_EXPIRES", "IDX_OAUTH_STATE_PROVIDER"
         ));
 
         // Product Catalog
@@ -261,7 +266,8 @@ public final class DatabaseTestConstants {
         put("USER_SESSIONS", Arrays.asList(
                 "ID", "CUSTOMER_ID", "REFRESH_TOKEN", "ACCESS_TOKEN_HASH",
                 "EXPIRES_AT", "CREATED_AT", "LAST_ACCESSED_AT",
-                "IP_ADDRESS", "USER_AGENT", "IS_ACTIVE"
+                "IP_ADDRESS", "USER_AGENT", "IS_ACTIVE",
+                "DEVICE_TYPE", "DEVICE_NAME", "LOCATION"
         ));
 
         // Product Catalog
@@ -500,6 +506,10 @@ public final class DatabaseTestConstants {
                 "ID", "CUSTOMER_ID", "TOKEN",
                 "EXPIRES_AT", "USED_AT", "CREATED_AT",
                 "IP_ADDRESS"
+        ));
+
+        put("OAUTH_STATES", Arrays.asList(
+                "STATE", "PROVIDER", "CHANNEL", "EXPIRES_AT", "USED_AT", "CREATED_AT"
         ));
     }};
 }

@@ -8,7 +8,7 @@
 -- =============================================
 CREATE TABLE wishlists (
     id RAW(16) DEFAULT SYS_GUID() PRIMARY KEY,
-    customer_id RAW(16) NOT NULL,
+    customer_id NUMBER NOT NULL,
     name VARCHAR2(100) DEFAULT 'My Wishlist',
     description CLOB,
 

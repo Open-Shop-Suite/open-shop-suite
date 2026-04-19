@@ -16,6 +16,9 @@ CREATE TABLE user_sessions (
     last_accessed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     ip_address INET,
     user_agent TEXT,
+    device_type VARCHAR(20) NOT NULL DEFAULT 'api' CHECK (device_type IN ('web', 'mobile_ios', 'mobile_android', 'desktop', 'api')),
+    device_name VARCHAR(255),
+    location VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
 
     -- Foreign keys
@@ -66,3 +69,20 @@ CREATE TABLE email_verification_tokens (
 -- Indexes for email verification
 CREATE INDEX idx_verify_customer ON email_verification_tokens (customer_id);
 CREATE INDEX idx_verify_email ON email_verification_tokens (email);
+
+-- =============================================
+-- OAUTH STATES TABLE
+-- =============================================
+CREATE TABLE oauth_states (
+    state      VARCHAR(128) NOT NULL,
+    provider   VARCHAR(20)  NOT NULL CHECK (provider IN ('google', 'facebook', 'linkedin')),
+    channel    VARCHAR(20)  NOT NULL CHECK (channel IN ('web', 'mobile_ios', 'mobile_android', 'desktop')),
+    expires_at TIMESTAMPTZ NOT NULL,
+    used_at    TIMESTAMPTZ NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT pk_oauth_states PRIMARY KEY (state)
+);
+
+CREATE INDEX idx_oauth_state_expires  ON oauth_states (expires_at);
+CREATE INDEX idx_oauth_state_provider ON oauth_states (provider);

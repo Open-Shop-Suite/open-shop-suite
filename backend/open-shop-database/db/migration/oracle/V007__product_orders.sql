@@ -9,7 +9,7 @@
 CREATE TABLE orders (
     id RAW(16) DEFAULT SYS_GUID() PRIMARY KEY,
     order_number VARCHAR2(50) NOT NULL UNIQUE,
-    customer_id RAW(16) NOT NULL,
+    customer_id NUMBER NOT NULL,
 
     -- Order status and workflow
     status VARCHAR2(20) DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled')),
@@ -347,7 +347,7 @@ COMMENT ON COLUMN coupons.discount_type IS 'Type: fixed amount, percentage, or f
 CREATE TABLE coupon_usage (
     id RAW(16) DEFAULT SYS_GUID() PRIMARY KEY,
     coupon_id RAW(16) NOT NULL,
-    customer_id RAW(16) NOT NULL,
+    customer_id NUMBER NOT NULL,
     order_id RAW(16) NOT NULL,
 
     -- Usage details

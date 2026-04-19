@@ -8,7 +8,7 @@
 -- =============================================
 CREATE TABLE shopping_carts (
     id RAW(16) DEFAULT SYS_GUID() PRIMARY KEY,
-    customer_id RAW(16) NOT NULL,
+    customer_id NUMBER NOT NULL,
     session_id VARCHAR2(128),  -- For guest carts
 
     -- Cart metadata

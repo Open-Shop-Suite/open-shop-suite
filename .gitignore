@@ -49,3 +49,4 @@ temp/
 *.bak
 *.swp
 *~
+/backend/open-shop-webserver/gen/
