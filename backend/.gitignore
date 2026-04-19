@@ -64,3 +64,10 @@ Thumbs.db
 # Build outputs
 dist/
 build/
+
+# calude files
+CLAUDE.md
+
+# Maven generated files
+target/
+
