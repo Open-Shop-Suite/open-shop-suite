@@ -4,13 +4,12 @@
 -- =============================================
 
 -- =============================================
--- USER SESSIONS TABLE
+-- CUSTOMER SESSIONS TABLE
 -- =============================================
-CREATE TABLE user_sessions (
+CREATE TABLE customer_sessions (
     id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
     customer_id UUID NOT NULL,
     refresh_token VARCHAR(512) NOT NULL UNIQUE,
-    access_token_hash VARCHAR(64),
     expires_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     last_accessed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
@@ -25,10 +24,10 @@ CREATE TABLE user_sessions (
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
 );
 
--- Indexes for user sessions
-CREATE INDEX idx_session_customer ON user_sessions (customer_id);
-CREATE INDEX idx_session_expires ON user_sessions (expires_at);
-CREATE INDEX idx_session_active ON user_sessions (is_active, expires_at);
+-- Indexes for customer_sessions
+CREATE INDEX idx_session_customer ON customer_sessions (customer_id);
+CREATE INDEX idx_session_expires ON customer_sessions (expires_at);
+CREATE INDEX idx_session_active ON customer_sessions (is_active, expires_at);
 
 -- =============================================
 -- PASSWORD RESET TOKENS TABLE

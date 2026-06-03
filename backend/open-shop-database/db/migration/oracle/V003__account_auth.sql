@@ -4,13 +4,12 @@
 -- =============================================
 
 -- =============================================
--- USER SESSIONS TABLE
+-- CUSTOMER SESSIONS TABLE
 -- =============================================
-CREATE TABLE user_sessions (
+CREATE TABLE customer_sessions (
     id RAW(16) DEFAULT SYS_GUID() PRIMARY KEY,
     customer_id NUMBER NOT NULL,
     refresh_token VARCHAR2(512) NOT NULL UNIQUE,
-    access_token_hash VARCHAR2(64),
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     last_accessed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -25,17 +24,17 @@ CREATE TABLE user_sessions (
         REFERENCES customers(id) ON DELETE CASCADE
 );
 
--- INDEXES for user_sessions
-CREATE INDEX idx_session_customer ON user_sessions (customer_id);
-CREATE INDEX idx_session_expires ON user_sessions (expires_at);
-CREATE INDEX idx_session_active ON user_sessions (is_active, expires_at);
+-- INDEXES for customer_sessions
+CREATE INDEX idx_session_customer ON customer_sessions (customer_id);
+CREATE INDEX idx_session_expires ON customer_sessions (expires_at);
+CREATE INDEX idx_session_active ON customer_sessions (is_active, expires_at);
 
--- COMMENTS for user_sessions
-COMMENT ON TABLE  user_sessions IS 'Active user sessions for authentication and security tracking';
-COMMENT ON COLUMN user_sessions.refresh_token IS 'Unique refresh token for session renewal';
-COMMENT ON COLUMN user_sessions.device_type   IS 'Client platform inferred from User-Agent; defaults to api for headless clients';
-COMMENT ON COLUMN user_sessions.device_name   IS 'Human-readable device description inferred from User-Agent (e.g. Chrome on macOS)';
-COMMENT ON COLUMN user_sessions.location      IS 'Approximate location derived from IP at session creation (e.g. New York, US); null if geolocation unavailable';
+-- COMMENTS for customer_sessions
+COMMENT ON TABLE  customer_sessions IS 'Active customer sessions — each row represents a logged-in device';
+COMMENT ON COLUMN customer_sessions.refresh_token IS 'Opaque refresh token used to issue new access tokens and to identify the session on logout';
+COMMENT ON COLUMN customer_sessions.device_type   IS 'Client platform inferred from User-Agent; defaults to api for headless clients';
+COMMENT ON COLUMN customer_sessions.device_name   IS 'Human-readable device description inferred from User-Agent (e.g. Chrome on macOS)';
+COMMENT ON COLUMN customer_sessions.location      IS 'Approximate location derived from IP at session creation (e.g. New York, US); null if geolocation unavailable';
 
 -- =============================================
 -- PASSWORD RESET TOKENS TABLE

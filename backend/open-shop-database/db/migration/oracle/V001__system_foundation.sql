@@ -4,6 +4,58 @@
 -- =============================================
 
 -- =============================================
+-- TENANT USER SETUP (proxy authentication)
+-- =============================================
+
+-- If tenant_password provided: user can log in directly with that password.
+-- Otherwise: NO AUTHENTICATION (proxy-only, app_user connects on behalf of tenant).
+DECLARE
+  v_tenant          VARCHAR2(128) := '${tenant}';
+  v_tenant_password VARCHAR2(128) := '${tenant_password}';
+  v_exists          NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO v_exists FROM dba_users WHERE username = v_tenant;
+
+  IF v_exists = 0 THEN
+    IF v_tenant_password IS NOT NULL AND LENGTH(v_tenant_password) > 0 THEN
+      EXECUTE IMMEDIATE 'CREATE USER ' || v_tenant || ' IDENTIFIED BY "' || v_tenant_password || '"';
+      EXECUTE IMMEDIATE 'GRANT CREATE SESSION TO ' || v_tenant;
+    ELSE
+      EXECUTE IMMEDIATE 'CREATE USER ' || v_tenant || ' NO AUTHENTICATION';
+    END IF;
+  ELSE
+    -- User already exists — just update authentication
+    IF v_tenant_password IS NOT NULL AND LENGTH(v_tenant_password) > 0 THEN
+      EXECUTE IMMEDIATE 'ALTER USER ' || v_tenant || ' IDENTIFIED BY "' || v_tenant_password || '"';
+      EXECUTE IMMEDIATE 'GRANT CREATE SESSION TO ' || v_tenant;
+    ELSE
+      EXECUTE IMMEDIATE 'ALTER USER ' || v_tenant || ' NO AUTHENTICATION';
+    END IF;
+  END IF;
+END;
+/
+-- Allow app_user to proxy into this tenant's schema
+DECLARE
+  v_tenant VARCHAR2(128) := '${tenant}';
+BEGIN
+  EXECUTE IMMEDIATE 'ALTER USER ' || v_tenant || ' GRANT CONNECT THROUGH ${app_user}';
+END;
+/
+
+-- =============================================
+-- APP USER PRIVILEGES
+-- =============================================
+-- Grant app_user full DML access across all tenant schemas so the web server
+-- can operate against any tenant without per-table grants.
+GRANT CREATE SESSION TO openshop;
+GRANT SELECT ANY TABLE TO openshop;
+GRANT INSERT ANY TABLE TO openshop;
+GRANT UPDATE ANY TABLE TO openshop;
+GRANT DELETE ANY TABLE TO openshop;
+GRANT EXECUTE ANY PROCEDURE TO openshop;
+GRANT SELECT ANY SEQUENCE TO openshop;
+
+-- =============================================
 -- AUDIT LOG TABLE
 -- =============================================
 CREATE TABLE audit_log (

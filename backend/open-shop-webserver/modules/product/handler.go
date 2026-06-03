@@ -10,7 +10,7 @@ type ProductHandler struct{}
 
 var _ genproduct.ServerInterface = (*ProductHandler)(nil)
 
-func NewProductHandler() *ProductHandler {
+func NewHandler() *ProductHandler {
 	return &ProductHandler{}
 }
 

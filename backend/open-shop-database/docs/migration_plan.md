@@ -142,10 +142,15 @@ mvn flyway:validate
 - [ ] Adequate shared_buffers and work_mem configured
 
 #### Oracle Specific
-- [ ] Oracle Database Free 21c+ running
-- [ ] User has CONNECT, RESOURCE, CREATE VIEW, CREATE SEQUENCE privileges
-- [ ] Adequate tablespace configured
+- [ ] Oracle Database Free 23c+ running (tested on 23.26)
+- [ ] `system` user credentials available (DBA required to create tenant users)
 - [ ] SYS_GUID() function available
+- [ ] Create `app_user` once manually before running any tenant migrations (one-time setup):
+```sql
+CREATE USER OPENSHOP IDENTIFIED BY "openshop@123";
+GRANT CREATE SESSION TO OPENSHOP;
+```
+- [ ] Each tenant schema is created per migration run with `NO AUTHENTICATION` (proxy-only, no direct login)
 
 ### Migration Execution Steps
 
@@ -174,14 +179,40 @@ mvn flyway:info
 ```
 
 #### Step 4: Execute Migration
-```bash
-# Deploy the complete schema
-mvn flyway:migrate
 
-# Verify deployment success
+**MySQL / PostgreSQL**
+```bash
+mvn flyway:migrate
 mvn flyway:info
 mvn flyway:validate
 ```
+
+**Oracle — per tenant** (repeat with a different `tenant` value for each new tenant)
+```bash
+mvn flyway:migrate \
+  -Dflyway.schemas=<tenant_name> \
+  -Dflyway.password=<system_password> \
+  -Dflyway.placeholders.tenant=<tenant_name> \
+  -Dflyway.placeholders.app_user=openshop
+
+# Example (verified working on Oracle 23.26)
+mvn flyway:migrate \
+  -Dflyway.schemas=kamakshi \
+  -Dflyway.password=Test@123 \
+  -Dflyway.placeholders.tenant=kamakshi \
+  -Dflyway.placeholders.app_user=openshop
+
+# If a previous run failed, repair first then re-run migrate
+mvn flyway:repair \
+  -Dflyway.schemas=kamakshi \
+  -Dflyway.password=Test@123
+```
+
+V001 sets up proxy auth for each tenant:
+- Creates tenant schema user with `NO AUTHENTICATION` (cannot login directly)
+- Grants proxy: `ALTER USER <tenant> GRANT CONNECT THROUGH openshop`
+
+Go app connects as: `user="openshop[kamakshi]" password="App@123" connectString="localhost:1521/freepdb1"`
 
 #### Step 5: Post-Migration Verification
 ```sql

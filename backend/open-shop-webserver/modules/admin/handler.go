@@ -10,7 +10,7 @@ type AdminHandler struct{}
 
 var _ genadmin.ServerInterface = (*AdminHandler)(nil)
 
-func NewAdminHandler() *AdminHandler {
+func NewHandler() *AdminHandler {
 	return &AdminHandler{}
 }
 

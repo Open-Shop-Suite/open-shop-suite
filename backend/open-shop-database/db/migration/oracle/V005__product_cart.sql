@@ -30,8 +30,8 @@ CREATE TABLE shopping_carts (
 
     -- Tax and shipping calculation data
     tax_rate NUMBER(5,4) DEFAULT 0 CHECK (tax_rate >= 0 AND tax_rate <= 1),
-    shipping_address_id RAW(16),
-    billing_address_id RAW(16),
+    shipping_address_id VARCHAR2(36),
+    billing_address_id VARCHAR2(36),
 
     -- Cart lifecycle timestamps
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

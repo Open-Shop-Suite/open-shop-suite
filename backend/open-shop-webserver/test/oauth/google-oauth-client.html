@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Google OAuth Token Test</title>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
+    textarea { width: 100%; font-family: monospace; font-size: 12px; }
+    button { margin-top: 8px; padding: 8px 16px; cursor: pointer; }
+    .label { font-weight: bold; margin-top: 20px; display: block; }
+  </style>
+</head>
+<body>
+  <h2>Google OAuth — ID Token for API Testing</h2>
+  <p>Sign in with Google below. The ID token and curl command will appear automatically.</p>
+
+  <div id="g_id_onload"
+       data-client_id="1052562366548-o6hes5fgllr1tcdu6mc4lpfkq3t2k3gp.apps.googleusercontent.com"
+       data-callback="handleCredentialResponse"
+       data-auto_prompt="false">
+  </div>
+  <div class="g_id_signin" data-type="standard"></div>
+
+  <span class="label">ID Token (expires in 1 hour):</span>
+  <textarea id="token_output" rows="5" placeholder="Token will appear here after sign in..."></textarea>
+  <button onclick="copyToken()">Copy Token</button>
+
+  <span class="label">Device Type:</span>
+  <select id="device_type" onchange="updateCurl()">
+    <option value="web">web</option>
+    <option value="mobile_ios">mobile_ios</option>
+    <option value="mobile_android">mobile_android</option>
+    <option value="desktop">desktop</option>
+    <option value="api">api</option>
+  </select>
+
+  <span class="label">curl command:</span>
+  <textarea id="curl_output" rows="5" placeholder="curl command will appear here..."></textarea>
+  <button onclick="copyCurl()">Copy curl</button>
+
+  <script>
+    let currentIdToken = '';
+
+    // Load Google script
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    document.head.appendChild(script);
+
+    function handleCredentialResponse(response) {
+      currentIdToken = response.credential;
+      document.getElementById('token_output').value = currentIdToken;
+      updateCurl();
+    }
+
+    function updateCurl() {
+      if (!currentIdToken) return;
+      const deviceType = document.getElementById('device_type').value;
+      document.getElementById('curl_output').value =
+        `curl -X POST http://localhost:8080/auth/oauth/google/signin \\\n` +
+        `  -H "Content-Type: application/json" \\\n` +
+        `  -d '{"id_token":"${currentIdToken}","device_type":"${deviceType}"}'`;
+    }
+
+    function copyToken() {
+      const el = document.getElementById('token_output');
+      el.select();
+      document.execCommand('copy');
+      alert('Token copied!');
+    }
+
+    function copyCurl() {
+      const el = document.getElementById('curl_output');
+      el.select();
+      document.execCommand('copy');
+      alert('curl command copied!');
+    }
+  </script>
+</body>
+</html>

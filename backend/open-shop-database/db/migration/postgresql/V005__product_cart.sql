@@ -30,8 +30,8 @@ CREATE TABLE shopping_carts (
 
     -- Tax and shipping calculation data
     tax_rate DECIMAL(5,4) DEFAULT 0,
-    shipping_address_id UUID,
-    billing_address_id UUID,
+    shipping_address_id VARCHAR(36),
+    billing_address_id VARCHAR(36),
 
     -- Cart lifecycle timestamps
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,

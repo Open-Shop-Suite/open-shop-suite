@@ -21,6 +21,7 @@ CREATE TABLE customers (
     google_id VARCHAR(100) UNIQUE,
     facebook_id VARCHAR(100) UNIQUE,
     linkedin_id VARCHAR(100) UNIQUE,
+    microsoft_id VARCHAR(100) UNIQUE,
 
     -- Audit fields
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
@@ -45,8 +46,8 @@ CREATE INDEX idx_customer_last_login ON customers (last_login_at DESC);
 -- CUSTOMER ADDRESSES TABLE
 -- =============================================
 CREATE TABLE customer_addresses (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-    customer_id UUID NOT NULL,
+    id VARCHAR(36) NOT NULL DEFAULT uuid_generate_v4()::text PRIMARY KEY,
+    customer_id INT NOT NULL,
     type address_type NOT NULL DEFAULT 'shipping',
 
     -- Name fields (support both individual and full name)
@@ -103,8 +104,8 @@ CREATE INDEX idx_address_validated ON customer_addresses (is_validated);
 -- CUSTOMER PREFERENCES TABLE
 -- =============================================
 CREATE TABLE customer_preferences (
-    id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
-    customer_id UUID NOT NULL UNIQUE,
+    id VARCHAR(36) NOT NULL DEFAULT uuid_generate_v4()::text PRIMARY KEY,
+    customer_id INT NOT NULL UNIQUE,
 
     -- Communication preferences
     email_notifications BOOLEAN DEFAULT TRUE,

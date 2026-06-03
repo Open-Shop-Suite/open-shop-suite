@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Microsoft OAuth Token Test</title>
+  <script src="https://alcdn.msauth.net/browser/2.38.2/js/msal-browser.min.js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
+    textarea { width: 100%; font-family: monospace; font-size: 12px; }
+    button { margin-top: 8px; padding: 8px 16px; cursor: pointer; }
+    .label { font-weight: bold; margin-top: 20px; display: block; }
+    #status { margin-top: 12px; color: #555; }
+  </style>
+</head>
+<body>
+  <h2>Microsoft OAuth — Access Token for API Testing</h2>
+  <p>Click the button below to sign in with Microsoft.</p>
+
+  <button onclick="signIn()">Sign in with Microsoft</button>
+  <div id="status"></div>
+
+  <span class="label">Access Token (expires in ~1 hour):</span>
+  <textarea id="token_output" rows="5" placeholder="Token will appear here after sign in..."></textarea>
+  <button onclick="copyToken()">Copy Token</button>
+
+  <span class="label">Device Type:</span>
+  <select id="device_type" onchange="updateCurl()">
+    <option value="web">web</option>
+    <option value="mobile_ios">mobile_ios</option>
+    <option value="mobile_android">mobile_android</option>
+    <option value="desktop">desktop</option>
+    <option value="api">api</option>
+  </select>
+
+  <span class="label">curl command:</span>
+  <textarea id="curl_output" rows="5" placeholder="curl command will appear here..."></textarea>
+  <button onclick="copyCurl()">Copy curl</button>
+
+  <script>
+    let currentAccessToken = '';
+    let currentUsername = '';
+
+    const msalConfig = {
+      auth: {
+        clientId: "3e8a2bcb-09dc-46f8-911c-85689eb5c06e",
+        authority: "https://login.microsoftonline.com/consumers",
+        redirectUri: "http://localhost:63342/open-shop-webserver/test/oauth/microsoft-oauth-client.html?",
+      }
+    };
+
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+    async function signIn() {
+      document.getElementById('status').textContent = 'Signing in...';
+
+      try {
+        const loginResponse = await msalInstance.loginPopup({
+          scopes: ["openid", "email", "profile", "User.Read"]
+        });
+
+        const account = loginResponse.account;
+        const tokenResponse = await msalInstance.acquireTokenSilent({
+          scopes: ["User.Read"],
+          account: account
+        });
+
+        currentAccessToken = tokenResponse.accessToken;
+        currentUsername = account.username;
+        document.getElementById('status').textContent = `Signed in as: ${account.username} ✓`;
+        document.getElementById('token_output').value = currentAccessToken;
+        updateCurl();
+      } catch (err) {
+        document.getElementById('status').textContent = 'Error: ' + err.message;
+        console.error(err);
+      }
+    }
+
+    function updateCurl() {
+      if (!currentAccessToken) return;
+      const deviceType = document.getElementById('device_type').value;
+      document.getElementById('curl_output').value =
+        `curl -X POST http://localhost:8080/auth/oauth/microsoft/signin \\\n` +
+        `  -H "Content-Type: application/json" \\\n` +
+        `  -d '{"id_token":"${currentAccessToken}","device_type":"${deviceType}"}'`;
+    }
+
+    function copyToken() {
+      const el = document.getElementById('token_output');
+      el.select();
+      document.execCommand('copy');
+      alert('Token copied!');
+    }
+
+    function copyCurl() {
+      const el = document.getElementById('curl_output');
+      el.select();
+      document.execCommand('copy');
+      alert('curl command copied!');
+    }
+  </script>
+</body>
+</html>

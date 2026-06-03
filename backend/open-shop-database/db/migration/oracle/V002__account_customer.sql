@@ -21,6 +21,7 @@ CREATE TABLE customers (
     google_id VARCHAR2(100) UNIQUE,
     facebook_id VARCHAR2(100) UNIQUE,
     linkedin_id VARCHAR2(100) UNIQUE,
+    microsoft_id VARCHAR2(100) UNIQUE,
 
     -- Audit fields
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -32,7 +33,8 @@ CREATE TABLE customers (
         email IS NOT NULL OR
         google_id IS NOT NULL OR
         facebook_id IS NOT NULL OR
-        linkedin_id IS NOT NULL
+        linkedin_id IS NOT NULL OR
+        microsoft_id IS NOT NULL
     )
 );
 
@@ -50,12 +52,13 @@ COMMENT ON TABLE customers IS 'Core customer accounts and authentication data';
 COMMENT ON COLUMN customers.google_id IS 'OAuth Google ID for social login integration';
 COMMENT ON COLUMN customers.facebook_id IS 'OAuth Facebook ID for social login integration';
 COMMENT ON COLUMN customers.linkedin_id IS 'OAuth LinkedIn ID for social login integration';
+COMMENT ON COLUMN customers.microsoft_id IS 'OAuth Microsoft ID for social login integration';
 
 -- =============================================
 -- CUSTOMER ADDRESSES TABLE
 -- =============================================
 CREATE TABLE customer_addresses (
-    id RAW(16) DEFAULT SYS_GUID() PRIMARY KEY,
+    id VARCHAR2(36) PRIMARY KEY,
     customer_id NUMBER NOT NULL,
     type VARCHAR2(20) DEFAULT 'shipping' CHECK (type IN ('shipping', 'billing', 'both')),
 
@@ -117,7 +120,7 @@ COMMENT ON COLUMN customer_addresses.is_validated IS 'Whether address has been v
 -- CUSTOMER PREFERENCES TABLE
 -- =============================================
 CREATE TABLE customer_preferences (
-    id RAW(16) DEFAULT SYS_GUID() PRIMARY KEY,
+    id VARCHAR2(36) PRIMARY KEY,
     customer_id NUMBER NOT NULL UNIQUE,
 
     -- Communication preferences

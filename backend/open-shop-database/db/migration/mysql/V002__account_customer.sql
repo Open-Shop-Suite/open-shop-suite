@@ -21,6 +21,7 @@ CREATE TABLE customers (
     google_id VARCHAR(100) UNIQUE,
     facebook_id VARCHAR(100) UNIQUE,
     linkedin_id VARCHAR(100) UNIQUE,
+    microsoft_id VARCHAR(100) UNIQUE,
 
     -- Audit fields
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -40,7 +41,7 @@ CREATE TABLE customers (
 -- =============================================
 CREATE TABLE customer_addresses (
     id VARCHAR(36) NOT NULL PRIMARY KEY,
-    customer_id VARCHAR(36) NOT NULL,
+    customer_id INT NOT NULL,
     type ENUM('shipping', 'billing', 'both') NOT NULL DEFAULT 'shipping',
 
     -- Name fields (support both individual and full name)
@@ -92,7 +93,7 @@ CREATE TABLE customer_addresses (
 -- =============================================
 CREATE TABLE customer_preferences (
     id VARCHAR(36) NOT NULL PRIMARY KEY,
-    customer_id VARCHAR(36) NOT NULL UNIQUE,
+    customer_id INT NOT NULL UNIQUE,
 
     -- Communication preferences
     email_notifications BOOLEAN DEFAULT TRUE,

@@ -1,0 +1,35 @@
+[server]
+port = 8080
+
+[log]
+level  = "info"
+format = "json"
+
+[auth]
+secret                      = ""
+access_token_expiry_minutes = 15
+refresh_token_expiry_days   = 30
+
+[auth.oauth.google]
+client_id     = "${GOOGLE_CLIENT_ID}"
+client_secret = "${GOOGLE_CLIENT_SECRET}"
+
+[auth.oauth.microsoft]
+client_id     = "${AZURE_CLIENT_ID}"
+client_secret = "${AZURE_CLIENT_SECRET}"
+tenant_id     = "${AZURE_TENANT_ID}"
+
+[database]
+driver   = "godror"
+host     = "localhost"
+port     = 1521
+name     = "freepdb1"
+user     = "Test"
+password = "${DB_PASSWORD}"
+ssl_mode = "disable"
+
+[database.pool]
+max_open_conns     = 25
+max_idle_conns     = 5
+conn_max_lifetime  = 300
+conn_max_idle_time = 60

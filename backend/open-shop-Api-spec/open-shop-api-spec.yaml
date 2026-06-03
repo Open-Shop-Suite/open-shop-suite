@@ -1,4 +1,4 @@
-  openapi: 3.0.3
+openapi: 3.0.3
 
 info:
   title: Open Shop API
@@ -31,227 +31,24 @@ security:
   - bearerAuth: [ ]
 
 paths:
-  /auth/signup:
-    post:
-      tags:
-        - account
-      summary: Sign up a new customer account
-      description: |
-        Create a new customer account with email and password and return authentication tokens.
-        User is immediately authenticated after successful signup.
-        Password is transmitted over HTTPS and hashed server-side using bcrypt.
-        Email verification required for full account activation.
-        
-        Sets an HTTP-only `refreshToken` cookie for web clients in addition to returning tokens
-        in the response body. Mobile/desktop clients should use the body tokens and ignore the cookie.
-        
-        Rate limited to 5 attempts per minute per IP address.
-      operationId: registerCustomer
-      security: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SignupRequest'
-            examples:
-              basic_registration:
-                $ref: '#/components/examples/auth_signup_request'
-      responses:
-        '201':
-          description: Customer signed up successfully and authenticated, email verification required
-          headers:
-            X-Request-Id:
-              $ref: '#/components/headers/RequestIdHeader'
-            Set-Cookie:
-              $ref: '#/components/headers/SetCookieRefreshToken'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RegisterResponse'
-              examples:
-                successful_registration:
-                  $ref: '#/components/examples/auth_register_response'
-        '409':
-          $ref: '#/components/responses/Conflict'
-
-  /auth/login:
-    post:
-      tags:
-        - account
-      summary: Login with email and password
-      description: |
-        Authenticate customer using email and password (transmitted over HTTPS, verified server-side).
-        For social login via Google, Facebook, or LinkedIn use `GET /auth/oauth/{provider}/authorize`.
-
-        Returns JWT access and refresh tokens on successful authentication. Also sets an HTTP-only
-        `refreshToken` cookie for web clients — mobile/desktop clients should use the body tokens.
-
-        Rate limited to 10 attempts per minute per IP address.
-      operationId: loginCustomer
-      security: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
-            examples:
-              email_password_login:
-                $ref: '#/components/examples/auth_login_request'
-      responses:
-        '200':
-          description: Login successful
-          headers:
-            X-Request-Id:
-              $ref: '#/components/headers/RequestIdHeader'
-            Set-Cookie:
-              $ref: '#/components/headers/SetCookieRefreshToken'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-              examples:
-                successful_login:
-                  $ref: '#/components/examples/auth_login_response'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /auth/password/forgot:
-    post:
-      tags:
-        - account
-      summary: Initiate password reset
-      description: |
-        Send password reset email to customer.
-        Email contains secure token for password reset confirmation.
-
-        Rate limited to 3 attempts per hour per email address.
-      operationId: forgotPassword
-      security: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PasswordResetRequest'
-            examples:
-              password_reset_request:
-                $ref: '#/components/examples/auth_password_forgot_request'
-      responses:
-        '200':
-          $ref: '#/components/responses/Success'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /auth/password/reset:
-    post:
-      tags:
-        - account
-      summary: Complete password reset
-      description: |
-        Complete password reset using token from email and new password.
-        Password is transmitted over HTTPS and hashed server-side using bcrypt.
-        Invalidates all existing sessions for the customer.
-
-        Rate limited to 5 attempts per hour per token.
-      operationId: resetPassword
-      security: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PasswordConfirmRequest'
-      responses:
-        '200':
-          $ref: '#/components/responses/Success'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
+  ##Accounts Api:
   # OAuth Authentication Endpoints
-  /auth/oauth/{provider}/authorize:
-    get:
-      tags:
-        - account
-      summary: Get OAuth authorization URL
-      description: |
-        Generate and return the authorization URL for the specified OAuth provider.
-        The client redirects the user to this URL to begin the provider login flow
-        (e.g. Google's consent screen).
-
-        The server generates a `state` value for CSRF protection. The client must
-        store this and verify it matches when the provider redirects back.
-
-        The redirect URI is resolved server-side from the `channel` parameter —
-        clients declare their platform identity and the server maps it to the
-        correct registered URI for the current environment (dev/staging/prod).
-
-        Rate limited to 20 attempts per minute per IP address.
-      operationId: getOAuthAuthorizationUrl
-      security: [ ]
-      parameters:
-        - name: provider
-          in: path
-          required: true
-          description: OAuth provider name
-          schema:
-            type: string
-            enum: [ google, facebook, LinkedIn ]
-            example: google
-        - name: channel
-          in: query
-          required: true
-          description: |
-            Client platform identity. The server maps this to the correct registered
-            redirect URI for the current environment — clients never need to know
-            or hardcode the URI.
-          schema:
-            type: string
-            enum: [ web, mobile_ios, mobile_android, desktop ]
-            example: web
-      responses:
-        '200':
-          description: Authorization URL generated successfully
-          headers:
-            X-Request-Id:
-              $ref: '#/components/headers/RequestIdHeader'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OAuthAuthorizeResponse'
-              examples:
-                google_authorize:
-                  $ref: '#/components/examples/auth_oauth_authorize_response'
-        '400':
-          description: Invalid provider or channel
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                invalid_channel:
-                  $ref: '#/components/examples/error_invalid_channel'
-
-  /auth/oauth/{provider}/callback:
+  /auth/oauth/{provider}/signin:
     post:
       tags:
         - account
-      summary: Exchange OAuth authorization code for tokens
+      summary: Sign in via OAuth provider using ID token
       description: |
-        Called by the client after the OAuth provider redirects back to the registered redirect URI.
-        The client extracts `code` and `state` from the redirect URL query parameters and POSTs
-        them here. The redirect URI is never sent by the client — the server resolves it internally
-        from the channel stored against the state.
+        Called by the client after obtaining an ID token from the provider SDK (Google Sign-In,
+        Microsoft MSAL, etc.). The client POSTs the ID token directly — no redirect or state needed.
 
         This endpoint:
-        - Looks up the `state` server-side; returns 401 if not found, already expired, or already used
-        - Resolves the redirect URI internally from the channel stored with the state
-        - Marks the state as consumed to prevent replay attacks
-        - Exchanges the `code` for provider tokens using the resolved redirect URI
-        - Fetches the user profile from the provider
+        - Validates the ID token with the provider
+        - Fetches the user profile (email, name, provider ID) from the token claims
+        - Looks up existing customer by provider ID, then by email (account linking)
         - Creates a new customer account if none exists, or logs in the existing one
-        - Returns JWT tokens and a flag indicating whether a new account was created
+        - Creates a session in user_sessions
+        - Returns JWT access and refresh tokens and a flag indicating whether a new account was created
 
         No separate register/login endpoints are needed for OAuth — this handles both.
 
@@ -259,7 +56,7 @@ paths:
         body tokens.
 
         Rate limited to 20 attempts per minute per IP address.
-      operationId: handleOAuthCallback
+      operationId: signInWithOAuth
       security: [ ]
       parameters:
         - name: provider
@@ -268,7 +65,7 @@ paths:
           description: OAuth provider name
           schema:
             type: string
-            enum: [ google, facebook, LinkedIn ]
+            enum: [ google, microsoft ]
             example: google
       requestBody:
         required: true
@@ -277,7 +74,7 @@ paths:
             schema:
               $ref: '#/components/schemas/OAuthCallbackRequest'
             examples:
-              google_callback:
+              google_signin:
                 $ref: '#/components/examples/auth_oauth_callback_request'
       responses:
         '200':
@@ -323,6 +120,280 @@ paths:
               examples:
                 provider_error:
                   $ref: '#/components/examples/provider_error'
+  /auth/signin:
+    post:
+      tags:
+        - account
+      summary: Login with email and password
+      description: |
+        Authenticate customer using email and password (transmitted over HTTPS, verified server-side).
+        For social login via Google, Microsoft, or LinkedIn use `POST /auth/oauth/{provider}/signin`.
+        
+        Returns JWT access and refresh tokens on successful authentication. Also sets an HTTP-only
+        `refreshToken` cookie for web clients — mobile/desktop clients should use the body tokens.
+        
+        Rate limited to 10 attempts per minute per IP address.
+      operationId: signIn
+      security: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              email_password_login:
+                $ref: '#/components/examples/auth_login_request'
+      responses:
+        '200':
+          description: Login successful
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestIdHeader'
+            Set-Cookie:
+              $ref: '#/components/headers/SetCookieRefreshToken'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                successful_login:
+                  $ref: '#/components/examples/auth_login_response'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+ # Manual Signup
+  /auth/signup:
+    post:
+      tags:
+        - account
+      summary: Sign up a new customer account
+      description: |
+        Create a new customer account with email and password and return authentication tokens.
+        User is immediately authenticated after successful signup.
+        Password is transmitted over HTTPS and hashed server-side using bcrypt.
+        Email verification required for full account activation.
+        
+        Sets an HTTP-only `refreshToken` cookie for web clients in addition to returning tokens
+        in the response body. Mobile/desktop clients should use the body tokens and ignore the cookie.
+        
+        Rate limited to 5 attempts per minute per IP address.
+      operationId: signUp
+      security: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+            examples:
+              basic_registration:
+                $ref: '#/components/examples/auth_signup_request'
+      responses:
+        '201':
+          description: Customer signed up successfully and authenticated, email verification required
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestIdHeader'
+            Set-Cookie:
+              $ref: '#/components/headers/SetCookieRefreshToken'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+              examples:
+                successful_registration:
+                  $ref: '#/components/examples/auth_register_response'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /auth/verify-email:
+    post:
+      tags:
+        - account
+      summary: Verify email address
+      description: |
+        Verify customer's email address using verification token sent via email.
+        Activates the customer account for full access.
+
+        Rate limited to 10 attempts per hour per token.
+      operationId: verifyEmailAddress
+      security: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailVerificationRequest'
+      responses:
+        '200':
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailVerifiedResponse'
+        '401':
+          description: Invalid or expired verification token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalid_verification_token:
+                  $ref: '#/components/examples/invalid_verification_token'
+        '409':
+          description: Email already verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                email_already_verified:
+                  $ref: '#/components/examples/email_already_verified'
+  /auth/resend-verification:
+    post:
+      tags:
+        - account
+      summary: Resend email verification
+      description: |
+        Resend email verification token to customer's email address.
+        Only works for unverified accounts.
+
+        Rate limited to 3 attempts per hour per email address.
+      operationId: resendVerificationEmail
+      security: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailResendRequest'
+      responses:
+        '200':
+          description: Verification email sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailSentResponse'
+        '404':
+          description: Customer account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                account_not_found:
+                  $ref: '#/components/examples/account_not_found'
+        '409':
+          description: Email already verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                email_already_verified:
+                  $ref: '#/components/examples/email_already_verified'
+ # Password Rest
+  /auth/password/forgot:
+    post:
+      tags:
+        - account
+      summary: Initiate password reset
+      description: |
+        Send password reset email to customer.
+        Email contains secure token for password reset confirmation.
+
+        Rate limited to 3 attempts per hour per email address.
+      operationId: requestPasswordReset
+      security: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+            examples:
+              password_reset_request:
+                $ref: '#/components/examples/auth_password_forgot_request'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /auth/password/reset:
+    post:
+      tags:
+        - account
+      summary: Complete password reset
+      description: |
+        Complete password reset using token from email and new password.
+        Password is transmitted over HTTPS and hashed server-side using bcrypt.
+        Invalidates all existing sessions for the customer.
+
+        Rate limited to 5 attempts per hour per token.
+      operationId: confirmPasswordReset
+      security: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordConfirmRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/change-password:
+    post:
+      tags:
+        - account
+      summary: Change account password
+      description: |
+        Change the password for the authenticated account. Requires the current password for verification.
+
+        Optionally revokes all other sessions to sign out other devices after a password change
+        (controlled by `logoutOtherSessions` in the request body).
+
+        Requires valid JWT Bearer token in Authorization header.
+        Rate limited to 5 attempts per hour per user.
+      operationId: updatePassword
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed successfully
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/RequestIdHeader'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ message, timestamp ]
+                properties:
+                  message:
+                    type: string
+                    example: Password changed successfully
+                  revokedSessionCount:
+                    type: integer
+                    description: Number of other sessions revoked (only present when logoutOtherSessions was true)
+                    example: 2
+                  timestamp:
+                    $ref: '#/components/schemas/Timestamp'
+        '401':
+          description: Invalid current password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalid_current_password:
+                  $ref: '#/components/examples/invalid_current_password'
   # Token Management Endpoints
   /auth/refresh:
     post:
@@ -386,10 +457,19 @@ paths:
 
         Also clears the HTTP-only refresh token cookie for web clients.
 
+        **Web clients**: Include session ID in request body. The server also clears the HTTP-only refreshToken cookie.
+        **Mobile/desktop clients**: Must include session ID in request body.
+
         Requires valid JWT Bearer token in Authorization header.
       operationId: logoutCustomer
       security:
         - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
       responses:
         '200':
           description: Logout successful
@@ -402,7 +482,6 @@ paths:
                 $ref: '#/components/schemas/LogoutResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   # Session Management Endpoints
   /auth/sessions:
     get:
@@ -414,7 +493,7 @@ paths:
         The current session is identified by `isCurrent: true`.
 
         Requires valid JWT Bearer token in Authorization header.
-      operationId: listSessions
+      operationId: getSessions
       security:
         - bearerAuth: [ ]
       responses:
@@ -439,7 +518,7 @@ paths:
         The current session remains active. Also clears the refresh token cookies on those sessions.
 
         Requires valid JWT Bearer token in Authorization header.
-      operationId: revokeOtherSessions
+      operationId: invalidateOtherSessions
       security:
         - bearerAuth: [ ]
       responses:
@@ -468,7 +547,6 @@ paths:
                     $ref: '#/components/schemas/Timestamp'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /auth/sessions/{id}:
     delete:
       tags:
@@ -482,7 +560,7 @@ paths:
         refresh token cookie (equivalent to logging out).
 
         Requires valid JWT Bearer token in Authorization header.
-      operationId: revokeSession
+      operationId: invalidateSession
       security:
         - bearerAuth: [ ]
       parameters:
@@ -527,145 +605,6 @@ paths:
               examples:
                 session_not_found:
                   $ref: '#/components/examples/session_not_found'
-  /auth/change-password:
-    post:
-      tags:
-        - account
-      summary: Change account password
-      description: |
-        Change the password for the authenticated account. Requires the current password for verification.
-
-        Optionally revokes all other sessions to sign out other devices after a password change
-        (controlled by `logoutOtherSessions` in the request body).
-
-        Requires valid JWT Bearer token in Authorization header.
-        Rate limited to 5 attempts per hour per user.
-      operationId: changePassword
-      security:
-        - bearerAuth: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ChangePasswordRequest'
-      responses:
-        '200':
-          description: Password changed successfully
-          headers:
-            X-Request-Id:
-              $ref: '#/components/headers/RequestIdHeader'
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [ message, timestamp ]
-                properties:
-                  message:
-                    type: string
-                    example: Password changed successfully
-                  revokedSessionCount:
-                    type: integer
-                    description: Number of other sessions revoked (only present when logoutOtherSessions was true)
-                    example: 2
-                  timestamp:
-                    $ref: '#/components/schemas/Timestamp'
-        '401':
-          description: Invalid current password
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                invalid_current_password:
-                  $ref: '#/components/examples/invalid_current_password'
-  # Email Verification Endpoints
-  /auth/verify-email:
-    post:
-      tags:
-        - account
-      summary: Verify email address
-      description: |
-        Verify customer's email address using verification token sent via email.
-        Activates the customer account for full access.
-
-        Rate limited to 10 attempts per hour per token.
-      operationId: verifyEmail
-      security: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EmailVerificationRequest'
-      responses:
-        '200':
-          description: Email verified successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EmailVerifiedResponse'
-        '401':
-          description: Invalid or expired verification token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                invalid_verification_token:
-                  $ref: '#/components/examples/invalid_verification_token'
-        '409':
-          description: Email already verified
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                email_already_verified:
-                  $ref: '#/components/examples/email_already_verified'
-  /auth/resend-verification:
-    post:
-      tags:
-        - account
-      summary: Resend email verification
-      description: |
-        Resend email verification token to customer's email address.
-        Only works for unverified accounts.
-
-        Rate limited to 3 attempts per hour per email address.
-      operationId: resendEmailVerification
-      security: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EmailResendRequest'
-      responses:
-        '200':
-          description: Verification email sent successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EmailSentResponse'
-        '404':
-          description: Customer account not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                account_not_found:
-                  $ref: '#/components/examples/account_not_found'
-        '409':
-          description: Email already verified
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                email_already_verified:
-                  $ref: '#/components/examples/email_already_verified'
   # Account Endpoints
   /me:
     get:
@@ -677,7 +616,7 @@ paths:
         Includes personal details and linked OAuth providers.
 
         Requires valid JWT Bearer token in Authorization header.
-      operationId: getMyProfile
+      operationId: getProfile
       security:
         - bearerAuth: [ ]
       responses:
@@ -689,7 +628,6 @@ paths:
                 $ref: '#/components/schemas/Customer'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     patch:
       tags:
         - account
@@ -701,7 +639,7 @@ paths:
 
         Requires valid JWT Bearer token in Authorization header.
         Rate limited to 10 updates per hour per user.
-      operationId: updateMyProfile
+      operationId: updateProfile
       security:
         - bearerAuth: [ ]
       requestBody:
@@ -734,60 +672,6 @@ paths:
               examples:
                 email_already_exists:
                   $ref: '#/components/examples/email_already_exists'
-    delete:
-      tags:
-        - account
-      summary: Delete own account
-      description: |
-        Permanently delete the authenticated customer's account and all associated data.
-        This action is irreversible. The customer must confirm by supplying `"DELETE"` as the
-        `confirmation` field. Email/password accounts must also provide their current password.
-
-        All active sessions are revoked and the HTTP-only refresh token cookie is cleared.
-
-        Requires valid JWT Bearer token in Authorization header.
-        Rate limited to 3 attempts per hour per user.
-      operationId: deleteMyAccount
-      security:
-        - bearerAuth: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DeleteAccountRequest'
-            examples:
-              delete_account:
-                $ref: '#/components/examples/delete_account'
-      responses:
-        '200':
-          description: Account deleted successfully
-          headers:
-            Set-Cookie:
-              $ref: '#/components/headers/ClearCookieRefreshToken'
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [ message, timestamp ]
-                properties:
-                  message:
-                    type: string
-                    example: Your account has been permanently deleted
-                  timestamp:
-                    $ref: '#/components/schemas/Timestamp'
-        '400':
-          description: Confirmation value incorrect
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                invalid_confirmation:
-                  $ref: '#/components/examples/invalid_confirmation'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
   # Account Address Management Endpoints
   /me/addresses:
     get:
@@ -830,7 +714,6 @@ paths:
                   $ref: '#/components/examples/customer_addresses_list'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     post:
       tags:
         - account
@@ -877,7 +760,6 @@ paths:
                   $ref: '#/components/examples/address_create_response'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /me/addresses/{addressId}:
     put:
       tags:
@@ -935,7 +817,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-
     delete:
       tags:
         - account
@@ -1036,7 +917,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  # Product Catalog Endpoints
+  ##Products
   /products:
     get:
       tags:
@@ -1134,7 +1015,7 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [products, timestamp]
+                required: [ products, timestamp ]
                 properties:
                   products:
                     type: array
@@ -1735,7 +1616,7 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [orders, timestamp]
+                required: [ orders, timestamp ]
                 properties:
                   orders:
                     type: array
@@ -4437,10 +4318,10 @@ components:
         timestamp: "2024-01-15T10:30:00Z"
 
     auth_oauth_callback_request:
-      summary: Google OAuth callback — client posts code+state
+      summary: Google OAuth signin — client posts ID token from Google SDK
       value:
-        code: "4/0AX4XfWjGl1..."
-        state: "csrf_abc123xyz789"
+        id_token: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+        device_type: "web"
 
     auth_oauth_callback_response_new_user:
       summary: New account created via Google OAuth
@@ -4972,7 +4853,7 @@ components:
       description: Whether more items exist beyond the current page.
       schema:
         type: string
-        enum: ["true", "false"]
+        enum: [ "true", "false" ]
         example: "true"
 
     PaginationLinkHeader:
@@ -5479,6 +5360,17 @@ components:
         timestamp:
           $ref: '#/components/schemas/Timestamp'
 
+    LogoutRequest:
+      type: object
+      required:
+        - sessionId
+      additionalProperties: false
+      properties:
+        sessionId:
+          type: string
+          description: Session ID to logout from. Required for mobile/desktop clients to identify which session to revoke.
+          example: "a1b2c3d4e5f6g7h8"
+
     LogoutResponse:
       type: object
       required:
@@ -5545,17 +5437,18 @@ components:
 
     OAuthCallbackRequest:
       type: object
-      required: [ code, state ]
+      required: [ id_token ]
       additionalProperties: false
       properties:
-        code:
+        id_token:
           type: string
-          description: Authorization code returned by the OAuth provider in the redirect URL
-          example: "4/0AX4XfWjGl1..."
-        state:
+          description: ID token obtained from the provider SDK (Google Sign-In, Microsoft MSAL)
+          example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+        device_type:
           type: string
-          description: State value from the redirect URL — must match what was issued by the authorize endpoint. The server uses the state to look up the original channel and resolves the redirect URI internally.
-          example: "csrf_abc123xyz789"
+          enum: [ web, mobile_ios, mobile_android, desktop, api ]
+          default: web
+          description: Client platform — used to record the session device type
 
     OAuthCallbackResponse:
       type: object
@@ -5638,22 +5531,6 @@ components:
             $ref: '#/components/schemas/Session'
         timestamp:
           $ref: '#/components/schemas/Timestamp'
-
-    DeleteAccountRequest:
-      type: object
-      required: [ confirmation ]
-      additionalProperties: false
-      properties:
-        confirmation:
-          type: string
-          description: Must be the literal string "DELETE" to confirm account deletion
-          example: "DELETE"
-        password:
-          type: string
-          description: Current password — required for email/password accounts
-          minLength: 8
-          maxLength: 128
-          example: "MySecureP@ssw0rd"
 
     ChangePasswordRequest:
       type: object

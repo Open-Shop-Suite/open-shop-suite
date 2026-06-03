@@ -4,13 +4,12 @@
 -- =============================================
 
 -- =============================================
--- USER SESSIONS TABLE
+-- CUSTOMER SESSIONS TABLE
 -- =============================================
-CREATE TABLE user_sessions (
+CREATE TABLE customer_sessions (
     id VARCHAR(36) NOT NULL PRIMARY KEY,
     customer_id VARCHAR(36) NOT NULL,
     refresh_token VARCHAR(512) NOT NULL UNIQUE,
-    access_token_hash VARCHAR(64),
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
